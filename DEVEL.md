@@ -185,6 +185,8 @@ To build the code in debug mode set `CMAKE_BUILD_TYPE=Debug` when building e.g. 
 
 To enable `nvToolsExt` set the `USENVTX` variable e.g. `make fullinstall USENVTX=ON`
 
+With `USE_HIP=ON` the same switches emit roctx ranges instead: `USENVTX` links `libroctx64`, and code built with `USE_NVTX` defined (e.g. `-DCMAKE_CXX_FLAGS=-DUSE_NVTX -DCMAKE_HIP_FLAGS=-DUSE_NVTX`) marks its ranges with `roctxRangePushA`/`roctxRangePop`. `rocprofv3 --marker-trace` records them.
+
 ##### DEV_BUILD
 
 To expedite the building process in dev setup you can set `DEV_BUILD=ON` e.g. `make fullinstall DEV_BUILD=ON`. This will build the binary with only single CUDA compute capability (currently 6.1).

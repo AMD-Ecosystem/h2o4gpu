@@ -326,6 +326,15 @@ if(USE_HIP)
         TARGET_LINK_LIBRARIES(gpuh2o4gpu PUBLIC
                 ${HIP_LIBS}
                 ${BLAS_LIBRARIES})
+        if($ENV{USENVTX})
+            MESSAGE(STATUS "Building with NVTX support on (roctx).")
+            FIND_LIBRARY(NVTX_LIBRARY roctx64 REQUIRED)
+            FIND_PATH(ROCTX_INCLUDE_DIR roctracer/roctx.h REQUIRED)
+            # The CPU library compiles the same solver headers.
+            INCLUDE_DIRECTORIES(${ROCTX_INCLUDE_DIR})
+            TARGET_LINK_LIBRARIES(cpuh2o4gpu ${NVTX_LIBRARY})
+            TARGET_LINK_LIBRARIES(gpuh2o4gpu PUBLIC ${NVTX_LIBRARY})
+        endif()
         if(OpenMP_CXX_FOUND)
                 # The HIP sources are compiled without OpenMP: clang's OpenMP
                 # runtime is not the GNU one the C++ sources use, and loading
