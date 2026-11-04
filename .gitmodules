@@ -10,3 +10,6 @@
 [submodule "xgboost_prev"]
 	path = xgboost_prev
 	url = https://github.com/h2oai/xgboost.git
+[submodule "LightGBM_rocm"]
+	path = LightGBM_rocm
+	url = https://github.com/lightgbm-org/LightGBM

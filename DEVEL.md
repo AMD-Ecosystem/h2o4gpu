@@ -208,6 +208,13 @@ cmake -S . -B build -DUSE_CUDA=OFF -DUSE_HIP=ON -DCMAKE_PREFIX_PATH=/opt/rocm -D
 cmake --build build -j
 ```
 
+With `USE_HIP=ON`, `make lightgbm_gpu` and `make lightgbm_cpu` build LightGBM from the `LightGBM_rocm` submodule (upstream LightGBM, which supports ROCm with `device_type='cuda'`) with the h2o changes in `patches/LightGBM_rocm` applied, instead of the `LightGBM` submodule:
+
+```
+git submodule update --init --recursive LightGBM_rocm
+make lightgbm_gpu lightgbm_cpu install_lightgbm_gpu install_lightgbm_cpu USE_HIP=ON
+```
+
 ##### NCCL
 
 Currently only XGBoost part of the project is using NCCL. By default NCCL support is ON during builds and the system NCCL (`libnccl-devel`, or `NCCL_ROOT` for a non-standard install) is used. To turn it off run with `USENCCL=0` e.g. `make fullinstall USENCCL=0`
