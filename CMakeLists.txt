@@ -343,11 +343,10 @@ if(USE_HIP)
         #============= GPU SWIG
         SET_SOURCE_FILES_PROPERTIES(src/swig/ch2o4gpu_gpu.i PROPERTIES CPLUSPLUS ON)
         SWIG_ADD_LIBRARY(ch2o4gpu_gpu LANGUAGE python SOURCES src/swig/ch2o4gpu_gpu.i)
+        # No OpenMP link flag: this module links with the HIP compiler, where
+        # -fopenmp would add clang's OpenMP runtime; gpuh2o4gpu brings the GNU one.
         SWIG_LINK_LIBRARIES(ch2o4gpu_gpu gpuh2o4gpu
                 ${PYTHON_LIBRARIES})
-
-        SET_TARGET_PROPERTIES(${SWIG_MODULE_ch2o4gpu_gpu_REAL_NAME} PROPERTIES
-                LINK_FLAGS ${OpenMP_CXX_FLAGS})
         #============= GPU SWIG
 
         #============= GTest
