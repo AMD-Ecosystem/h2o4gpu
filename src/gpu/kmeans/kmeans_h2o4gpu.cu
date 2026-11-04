@@ -436,6 +436,7 @@ thrust::host_vector<T> kmeans_parallel(int verbose, int seed,
 #pragma omp parallel for
     for (int i = 0; i < num_gpu; i++) {
       CUDACHECK(cudaSetDevice(i));
+      const int device = i;
 
       // Count how many potential centroids there are using probabilities
       // The further the row is from the closest cluster center the higher
@@ -447,8 +448,6 @@ thrust::host_vector<T> kmeans_parallel(int verbose, int seed,
           [=] __device__(int idx) {
             thrust::default_random_engine rng(seed);
             thrust::uniform_real_distribution<> dist(0.0, 1.0);
-            int device;
-            cudaGetDevice(&device);
             rng.discard(idx + device * rows_per_gpu);
             T prob_threshold = (T)dist(rng);
 
@@ -473,8 +472,6 @@ thrust::host_vector<T> kmeans_parallel(int verbose, int seed,
               int row = idx / cols;
               thrust::default_random_engine rng(seed);
               thrust::uniform_real_distribution<> dist(0.0, 1.0);
-              int device;
-              cudaGetDevice(&device);
               rng.discard(row + device * rows_per_gpu);
               T prob_threshold = (T)dist(rng);
 

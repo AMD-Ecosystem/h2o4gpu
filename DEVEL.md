@@ -189,6 +189,23 @@ To enable `nvToolsExt` set the `USENVTX` variable e.g. `make fullinstall USENVTX
 
 To expedite the building process in dev setup you can set `DEV_BUILD=ON` e.g. `make fullinstall DEV_BUILD=ON`. This will build the binary with only single CUDA compute capability (currently 6.1).
 
+##### USE_HIP (AMD GPUs)
+
+To build the GPU library for AMD GPUs with ROCm instead of CUDA, install ROCm (with hipBLAS, hipSPARSE, hipSOLVER, hipRAND, hipCUB and rocThrust) and set `USE_HIP=ON`, e.g. `make cpp USE_HIP=ON`. Point CMake at ROCm with `CMAKE_PREFIX_PATH`, or put `/opt/rocm/bin` on `PATH`:
+
+```
+export CMAKE_PREFIX_PATH=/opt/rocm
+make cpp USE_HIP=ON
+make testunit USE_HIP=ON
+```
+
+The GPU architecture is detected from the GPUs in the machine. To build for another one, configure directly with CMake:
+
+```
+cmake -S . -B build -DUSE_CUDA=OFF -DUSE_HIP=ON -DCMAKE_PREFIX_PATH=/opt/rocm -DCMAKE_HIP_ARCHITECTURES=gfx90a
+cmake --build build -j
+```
+
 ##### NCCL
 
 Currently only XGBoost part of the project is using NCCL. By default NCCL support is ON during builds and the system NCCL (`libnccl-devel`, or `NCCL_ROOT` for a non-standard install) is used. To turn it off run with `USENCCL=0` e.g. `make fullinstall USENCCL=0`

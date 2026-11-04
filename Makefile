@@ -92,7 +92,7 @@ update_submodule:
 cpp:
 	mkdir -p build && \
 	cd build && \
-	cmake -DDEV_BUILD=${DEV_BUILD} ../ && \
+	cmake -DDEV_BUILD=${DEV_BUILD} $(CMAKE_GPU_FLAGS) ../ && \
 	make -j`nproc` && \
 	if [ "${DEV_BUILD}" != "ON" ]; then \
 		strip --strip-unneeded _ch2o4gpu_*pu.so && \
@@ -577,7 +577,7 @@ dotestbig:
 testunit:
 	mkdir -p build && \
 	cd build && \
-	cmake -DDEV_BUILD=${DEV_BUILD} ../ && \
+	cmake -DDEV_BUILD=${DEV_BUILD} $(CMAKE_GPU_FLAGS) ../ && \
 	make h2o4gpu_test -j$(nproc) && \
 	./h2o4gpu_test
 #########################################
