@@ -110,13 +110,26 @@ xgboost_prev:
 	@echo "----- Building XGboost previous version target $(XGBOOST_TARGET) -----"
 	cd xgboost_prev; sed -i -e 's/35;50;52;60;61;70/35;37;50;52;53;60;61;62;70;75/g' cmake/Utils.cmake; $(XGB_PROLOGUE) 'make -f Makefile2 PYTHON=$(PYTHON) CXX=$(XGB_CXX) CC=$(XGB_CC) $(XGBOOST_TARGET)'
 
+.PHONY: xgboost_rocm
+xgboost_rocm:
+	@echo "----- Building XGboost (ROCm) -----"
+	cd xgboost_rocm && \
+	(git apply --reverse --check ../patches/xgboost_rocm/*.patch 2>/dev/null || git apply ../patches/xgboost_rocm/*.patch) && \
+	cmake -S . -B build -DUSE_HIP=ON -DCMAKE_BUILD_TYPE=Release && \
+	cmake --build build -j`nproc` && \
+	cd python-package && rm -rf dist && $(PYTHON) -m build --wheel --config-setting use_hip=True . -o dist
+
 .PHONY: xgboost
+ifeq ($(USE_HIP),ON)
+xgboost: xgboost_rocm
+else
 xgboost:
 	@echo "----- Building XGboost target $(XGBOOST_TARGET) -----"
 	# xgboost 2.1.4 fork: GPU archs (incl. Blackwell sm_100/sm_120) are set in
 	# the submodule's Makefile2 via -DGPU_COMPUTE_VER; the old cmake/Utils.cmake
 	# `set(flags ...)` sed no longer applies (2.x has no such line).
 	cd xgboost; $(XGB_PROLOGUE) 'make -f Makefile2 PYTHON=$(PYTHON) CXX=$(XGB_CXX) CC=$(XGB_CC) $(XGBOOST_TARGET)'
+endif
 
 fullinstall-xgboost: xgboost install_xgboost
 
@@ -256,7 +269,7 @@ install_xgboost_prev:
 
 install_xgboost:
 	@echo "----- pip install xgboost built locally -----"
-	cd xgboost/python-package/dist && $(PYTHON) -m pip install xgboost-*.whl --upgrade --no-deps --target ../
+	cd $(XGBOOST_DIR)/python-package/dist && $(PYTHON) -m pip install xgboost-*.whl --upgrade --no-deps --target ../
 
 install_lightgbm_gpu:
 	@echo "----- pip install lightgbm_gpu built locally -----"

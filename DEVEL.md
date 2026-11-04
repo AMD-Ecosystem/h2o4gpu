@@ -208,11 +208,14 @@ cmake -S . -B build -DUSE_CUDA=OFF -DUSE_HIP=ON -DCMAKE_PREFIX_PATH=/opt/rocm -D
 cmake --build build -j
 ```
 
-With `USE_HIP=ON`, `make lightgbm_gpu` and `make lightgbm_cpu` build LightGBM from the `LightGBM_rocm` submodule (upstream LightGBM, which supports ROCm with `device_type='cuda'`) with the h2o changes in `patches/LightGBM_rocm` applied, instead of the `LightGBM` submodule:
+With `USE_HIP=ON`, `make lightgbm_gpu` and `make lightgbm_cpu` build LightGBM from the `LightGBM_rocm` submodule (upstream LightGBM, which supports ROCm with `device_type='cuda'`) with the h2o changes in `patches/LightGBM_rocm` applied, instead of the `LightGBM` submodule.
+
+Likewise `make xgboost` builds XGBoost from the `xgboost_rocm` submodule (AMD's ROCm branch of XGBoost; use `device='cuda'` or `device='gpu'`) with the h2o changes in `patches/xgboost_rocm` applied, instead of the `xgboost` submodule, and `make xgboost_prev` builds the previous XGBoost for the CPU:
 
 ```
-git submodule update --init --recursive LightGBM_rocm
+git submodule update --init --recursive LightGBM_rocm xgboost_rocm
 make lightgbm_gpu lightgbm_cpu install_lightgbm_gpu install_lightgbm_cpu USE_HIP=ON
+make xgboost install_xgboost USE_HIP=ON
 ```
 
 ##### NCCL

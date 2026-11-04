@@ -12,8 +12,12 @@ CMAKE_GPU_FLAGS = -DUSE_CUDA=OFF -DUSE_HIP=ON
 # h2oai's LightGBM fork predates ROCm support; build upstream LightGBM with the
 # same h2o changes (patches/LightGBM_rocm) instead.
 LIGHTGBM_DIR = LightGBM_rocm
+# xgboost has no ROCm build upstream; build AMD's ROCm branch of xgboost with
+# h2oai's changes (patches/xgboost_rocm) instead.
+XGBOOST_DIR = xgboost_rocm
 else
 LIGHTGBM_DIR = LightGBM
+XGBOOST_DIR = xgboost
 endif
 
 # By default 0 means Release, set to "Debug" if you want to compile sources with debug flags
@@ -59,6 +63,12 @@ else
     CUDA_LIB=$(CUDA_HOME)/lib64
     MAKEFILE_CUDA_VERSION ?= $(shell ls $(CUDA_LIB)/libcudart.so.* | head -1 | rev | cut -d "." -f -2 | rev)
     CUDA_MAJOR_VERSION = $(shell echo $(MAKEFILE_CUDA_VERSION) | cut -d "." -f 1)
+endif
+
+ifeq ($(USE_HIP),ON)
+    # xgboost_prev (the previous h2oai xgboost, kept to load old models) has no
+    # ROCm build; build it for the CPU.
+    XGBOOST_TARGET=libxgboost-cpu
 endif
 
 # PyDataTable version. Currently not used in the code.
