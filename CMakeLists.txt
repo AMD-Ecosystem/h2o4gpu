@@ -356,6 +356,12 @@ if(USE_HIP)
         # -fopenmp would add clang's OpenMP runtime; gpuh2o4gpu brings the GNU one.
         SWIG_LINK_LIBRARIES(ch2o4gpu_gpu gpuh2o4gpu
                 ${PYTHON_LIBRARIES})
+        # The ROCm library directory is an implicit link directory of the HIP
+        # compiler, so CMake leaves it out of the runpath; without it the
+        # module fails to load unless the loader already searches there.
+        SET_TARGET_PROPERTIES(${SWIG_MODULE_ch2o4gpu_gpu_REAL_NAME} PROPERTIES
+                BUILD_RPATH $<TARGET_FILE_DIR:hip::amdhip64>
+                INSTALL_RPATH $<TARGET_FILE_DIR:hip::amdhip64>)
         #============= GPU SWIG
 
         #============= GTest
