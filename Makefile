@@ -106,9 +106,14 @@ py: build/VERSION.txt
 	$(MAKE) -j all -C src/interface_py
 
 .PHONY: xgboost_prev
+ifeq ($(USE_HIP),ON)
+xgboost_prev:
+	@echo "----- XGboost previous version is not built with USE_HIP=ON -----"
+else
 xgboost_prev:
 	@echo "----- Building XGboost previous version target $(XGBOOST_TARGET) -----"
 	cd xgboost_prev; sed -i -e 's/35;50;52;60;61;70/35;37;50;52;53;60;61;62;70;75/g' cmake/Utils.cmake; $(XGB_PROLOGUE) 'make -f Makefile2 PYTHON=$(PYTHON) CXX=$(XGB_CXX) CC=$(XGB_CC) $(XGBOOST_TARGET)'
+endif
 
 .PHONY: xgboost_rocm
 xgboost_rocm:
@@ -263,9 +268,14 @@ build_py: update_submodule clean_py py # avoid cpp
 # INSTALL TARGETS
 #########################################
 
+ifeq ($(USE_HIP),ON)
+install_xgboost_prev:
+	@echo "----- XGboost previous version is not built with USE_HIP=ON -----"
+else
 install_xgboost_prev:
 	@echo "----- pip install xgboost previous version built locally -----"
 	cd xgboost_prev/python-package/dist && $(PYTHON) -m pip install xgboost-*.whl --no-deps --target ../
+endif
 
 install_xgboost:
 	@echo "----- pip install xgboost built locally -----"

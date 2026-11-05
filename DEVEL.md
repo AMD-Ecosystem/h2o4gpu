@@ -210,14 +210,15 @@ cmake --build build -j
 
 With `USE_HIP=ON`, `make lightgbm_gpu` and `make lightgbm_cpu` build LightGBM from the `LightGBM_rocm` submodule (upstream LightGBM, which supports ROCm with `device_type='cuda'`) with the h2o changes in `patches/LightGBM_rocm` applied, instead of the `LightGBM` submodule.
 
-Likewise `make xgboost` builds XGBoost from the `xgboost_rocm` submodule (AMD's ROCm branch of XGBoost; use `device='cuda'` or `device='gpu'`) with the h2o changes in `patches/xgboost_rocm` applied, instead of the `xgboost` submodule, and `make xgboost_prev` builds the previous XGBoost for the CPU:
+Likewise `make xgboost` builds XGBoost from the `xgboost_rocm` submodule (AMD's ROCm branch of XGBoost; use `device='cuda'` or `device='gpu'`) with the h2o changes in `patches/xgboost_rocm` applied, instead of the `xgboost` submodule:
 
 ```
 git submodule update --init --recursive LightGBM_rocm xgboost_rocm
 make lightgbm_gpu lightgbm_cpu install_lightgbm_gpu install_lightgbm_cpu USE_HIP=ON
 make xgboost install_xgboost USE_HIP=ON
-make xgboost_prev install_xgboost_prev USE_HIP=ON
 ```
+
+The previous XGBoost (`xgboost_prev`) is not built or bundled with `USE_HIP=ON`, so `h2o4gpu.util.xgboost_migration.load_pkl` cannot convert models pickled by XGBoost 0.90 there.
 
 ##### NCCL
 

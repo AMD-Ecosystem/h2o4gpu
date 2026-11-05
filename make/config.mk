@@ -65,12 +65,6 @@ else
     CUDA_MAJOR_VERSION = $(shell echo $(MAKEFILE_CUDA_VERSION) | cut -d "." -f 1)
 endif
 
-ifeq ($(USE_HIP),ON)
-    # xgboost_prev (the previous h2oai xgboost, kept to load old models) has no
-    # ROCm build; build it for the CPU.
-    XGBOOST_TARGET=libxgboost-cpu
-endif
-
 # PyDataTable version. Currently not used in the code.
 #PYDATATABLE_VERSION = 0.1.0+master.97
 
