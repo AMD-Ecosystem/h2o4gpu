@@ -108,7 +108,9 @@ py: build/VERSION.txt
 .PHONY: xgboost_prev
 xgboost_prev:
 	@echo "----- Building XGboost previous version target $(XGBOOST_TARGET) -----"
-	cd xgboost_prev; sed -i -e 's/35;50;52;60;61;70/35;37;50;52;53;60;61;62;70;75/g' cmake/Utils.cmake; $(XGB_PROLOGUE) 'make -f Makefile2 PYTHON=$(PYTHON) CXX=$(XGB_CXX) CC=$(XGB_CC) $(XGBOOST_TARGET)'
+	# Skip the submodule's wheel step (libxgboostp3): current setuptools rejects
+	# its version, 1.4.0-SNAPSHOT. install_xgboost_prev packages the library.
+	cd xgboost_prev; sed -i -e 's/35;50;52;60;61;70/35;37;50;52;53;60;61;62;70;75/g' cmake/Utils.cmake; $(XGB_PROLOGUE) 'make -f Makefile2 PYTHON=$(PYTHON) CXX=$(XGB_CXX) CC=$(XGB_CC) -o libxgboostp3 $(XGBOOST_TARGET)'
 
 .PHONY: xgboost_rocm
 xgboost_rocm:
@@ -264,8 +266,9 @@ build_py: update_submodule clean_py py # avoid cpp
 #########################################
 
 install_xgboost_prev:
-	@echo "----- pip install xgboost previous version built locally -----"
-	cd xgboost_prev/python-package/dist && $(PYTHON) -m pip install xgboost-*.whl --no-deps --target ../
+	@echo "----- install xgboost previous version built locally -----"
+	mkdir -p xgboost_prev/python-package/xgboost/lib
+	cp xgboost_prev/lib/libxgboost.so xgboost_prev/python-package/xgboost/lib/
 
 install_xgboost:
 	@echo "----- pip install xgboost built locally -----"
