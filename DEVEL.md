@@ -216,6 +216,7 @@ Likewise `make xgboost` builds XGBoost from the `xgboost_rocm` submodule (AMD's 
 git submodule update --init --recursive LightGBM_rocm xgboost_rocm
 make lightgbm_gpu lightgbm_cpu install_lightgbm_gpu install_lightgbm_cpu USE_HIP=ON
 make xgboost install_xgboost USE_HIP=ON
+make xgboost_prev install_xgboost_prev USE_HIP=ON
 ```
 
 ##### NCCL
