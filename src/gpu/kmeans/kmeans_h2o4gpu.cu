@@ -14,6 +14,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <set>
 #include <vector>

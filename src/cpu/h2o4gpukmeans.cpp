@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <vector>
 #include "matrix/matrix.h"

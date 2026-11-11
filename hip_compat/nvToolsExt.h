@@ -3,7 +3,13 @@
 
 #include <stdint.h>
 
+#if __has_include(<roctracer/roctx.h>)
 #include <roctracer/roctx.h>
+#else
+// No roctx in this ROCm (Windows): ranges are no-ops.
+static inline int roctxRangePushA(const char *) { return 0; }
+static inline int roctxRangePop(void) { return 0; }
+#endif
 
 #define NVTX_VERSION 2
 #define NVTX_EVENT_ATTRIB_STRUCT_SIZE ((uint16_t)sizeof(nvtxEventAttributes_t))

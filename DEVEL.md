@@ -220,6 +220,14 @@ make xgboost install_xgboost USE_HIP=ON
 
 The previous XGBoost (`xgboost_prev`) is not built or bundled with `USE_HIP=ON`, so `h2o4gpu.util.xgboost_migration.load_pkl` cannot convert models pickled by XGBoost 0.90 there.
 
+On Windows, configure with CMake 4 and ROCm's `clang-cl` as the C, C++ and HIP compiler, and OpenBLAS from vcpkg. This builds the GPU library, the `_ch2o4gpu_gpu`/`_ch2o4gpu_cpu` Python modules and `h2o4gpu_test.exe`; the Makefile targets and the wheel are Linux-only. Python does not search `PATH` for the modules' DLLs, so add the ROCm `bin` directory with `os.add_dll_directory` before importing them.
+
+```
+set ROCM=<ROCm install root>
+cmake -G Ninja -S . -B build -DUSE_CUDA=OFF -DUSE_HIP=ON -DCMAKE_HIP_ARCHITECTURES=gfx1151 -DCMAKE_PREFIX_PATH=%ROCM% -DCMAKE_C_COMPILER=%ROCM%/lib/llvm/bin/clang-cl.exe -DCMAKE_CXX_COMPILER=%ROCM%/lib/llvm/bin/clang-cl.exe -DCMAKE_HIP_COMPILER=%ROCM%/lib/llvm/bin/clang-cl.exe -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
 ##### NCCL
 
 Currently only XGBoost part of the project is using NCCL. By default NCCL support is ON during builds and the system NCCL (`libnccl-devel`, or `NCCL_ROOT` for a non-standard install) is used. To turn it off run with `USENCCL=0` e.g. `make fullinstall USENCCL=0`

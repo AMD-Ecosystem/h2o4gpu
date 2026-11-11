@@ -3,6 +3,10 @@
 #pragma once
 
 #include <hip/hip_runtime.h>
+#ifdef _WIN32
+// The Windows timer in utils.cuh uses the Win32 API.
+#include <windows.h>
+#endif
 
 #define cudaDeviceMapHost hipDeviceMapHost
 #define cudaDeviceProp hipDeviceProp_t
