@@ -12,8 +12,12 @@ CMAKE_GPU_FLAGS = -DUSE_CUDA=OFF -DUSE_HIP=ON
 # h2oai's LightGBM fork predates ROCm support; build upstream LightGBM with the
 # same h2o changes (patches/LightGBM_rocm) instead.
 LIGHTGBM_DIR = LightGBM_rocm
+# xgboost has no ROCm build upstream; build AMD's ROCm branch of xgboost with
+# h2oai's changes (patches/xgboost_rocm) instead.
+XGBOOST_DIR = xgboost_rocm
 else
 LIGHTGBM_DIR = LightGBM
+XGBOOST_DIR = xgboost
 endif
 
 # By default 0 means Release, set to "Debug" if you want to compile sources with debug flags

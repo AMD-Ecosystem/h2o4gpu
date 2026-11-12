@@ -36,9 +36,10 @@ all: prep
 	# for incorporating xgboost and lightgbm builds
 	rm -rf ./xgboost
 	rm -rf ./xgboost_prev
-	ln -sf ../../xgboost/python-package/xgboost ./xgboost
-	ln -sf ../../xgboost_prev/python-package/xgboost ./xgboost_prev
-	rm -rf ../../xgboost/python-package/xgboost/src/
+	ln -sf ../../$(XGBOOST_DIR)/python-package/xgboost ./xgboost
+	# The previous xgboost is not built with USE_HIP=ON, so it is not bundled.
+	if [ "$(USE_HIP)" != "ON" ]; then ln -sf ../../xgboost_prev/python-package/xgboost ./xgboost_prev; fi
+	rm -rf ../../$(XGBOOST_DIR)/python-package/xgboost/src/
 	rm -rf ../../xgboost_prev/python-package/xgboost/src/
 	# LightGBM is optional: only bundle it if its python-package was built.
 	rm -f lightgbm_gpu lightgbm_cpu
