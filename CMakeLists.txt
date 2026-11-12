@@ -341,17 +341,20 @@ if(USE_HIP)
         SET_SOURCE_FILES_PROPERTIES(${GPU_CU_SOURCES} PROPERTIES LANGUAGE HIP)
 
         # nvcc includes cuda_runtime.h implicitly in every .cu file.
+        # The GLM file limits inlining to functions marked inline (/Ob1 is
+        # the clang-cl spelling). At the default level the GLM reduction
+        # (float and double) compiles into a large device function whose
+        # long branches clobber the return address
+        # (llvm/llvm-project#224205). The double-precision fit was observed
+        # to hang on gfx1151 (Windows); the same code pattern is present in
+        # Linux RDNA builds, although no hang was seen there. Limiting
+        # inlining removes those long branches.
         if(CMAKE_HIP_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
                 SET(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} /FI${HIP_COMPAT_DIR}/cuda_runtime.h -w")
-                # /Ob1 limits inlining to functions marked inline. At the
-                # default level the GLM reduction compiles into a large device
-                # function whose long branches clobber the return address
-                # (llvm/llvm-project#224205); the double-precision fit was
-                # observed to hang on gfx1151. Limiting inlining removes those
-                # long branches.
                 SET_SOURCE_FILES_PROPERTIES(src/gpu/h2o4gpuglm.cu PROPERTIES COMPILE_OPTIONS "/Ob1")
         else()
                 SET(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -include ${HIP_COMPAT_DIR}/cuda_runtime.h -w")
+                SET_SOURCE_FILES_PROPERTIES(src/gpu/h2o4gpuglm.cu PROPERTIES COMPILE_OPTIONS "-finline-hint-functions")
         endif()
 
         TARGET_LINK_LIBRARIES(commonh2o4gpu PUBLIC hip::host)
