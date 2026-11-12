@@ -5,6 +5,12 @@
 # Set to 1 or ON to build with NVTX support
 USENVTX=0
 
+# Set to ON to build the GPU library for AMD GPUs with ROCm instead of CUDA
+USE_HIP ?= OFF
+ifeq ($(USE_HIP),ON)
+CMAKE_GPU_FLAGS = -DUSE_CUDA=OFF -DUSE_HIP=ON
+endif
+
 # By default 0 means Release, set to "Debug" if you want to compile sources with debug flags
 CMAKE_BUILD_TYPE=0
 
