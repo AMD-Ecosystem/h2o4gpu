@@ -14,6 +14,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <set>
 #include <vector>
@@ -27,6 +28,13 @@
 /**
  * METHODS FOR DATA COPYING AND GENERATION
  */
+
+// Result buffers are handed to the caller, which releases them with free()
+// (the Python bindings give them to NumPy), so they must come from malloc.
+template <typename T>
+T *alloc_result(size_t n) {
+  return static_cast<T *>(calloc(n, sizeof(T)));
+}
 
 template <typename T>
 void random_data(int verbose, thrust::device_vector<T> &array, int m, int n) {
@@ -766,20 +774,19 @@ int kmeans_fit(int verbose, int seed, int gpu_idtry, int n_gputry, size_t rows,
   double t1 = timer<double>();
 
   // copy result of centroids (sitting entirely on each device) back to host
-  // TODO FIXME: When do delete ctr and h_labels memory???
-  thrust::host_vector<T> *ctr = new thrust::host_vector<T>(*d_centroids[0]);
-  *pred_centroids = ctr->data();
+  T *ctr = alloc_result<T>(d_centroids[0]->size());
+  thrust::copy(d_centroids[0]->begin(), d_centroids[0]->end(), ctr);
+  *pred_centroids = ctr;
 
   // copy assigned labels
-  thrust::host_vector<int> *h_labels = new thrust::host_vector<int>(rows);
+  int *h_labels = alloc_result<int>(rows);
   //#pragma omp parallel for
   for (int q = 0; q < n_gpu; q++) {
     int offset = labels[q]->size() * q;
-    h_labels->insert(h_labels->begin() + offset, labels[q]->begin(),
-                     labels[q]->end());
+    thrust::copy(labels[q]->begin(), labels[q]->end(), h_labels + offset);
   }
 
-  *pred_labels = h_labels->data();
+  *pred_labels = h_labels;
 
   // debug
   if (verbose >= H2O4GPU_LOG_VERBOSE) {
@@ -838,7 +845,7 @@ int kmeans_predict(int verbose, int gpu_idtry, int n_gputry, size_t rows,
   thrust::device_vector<T> *d_centroids[n_gpu];
   thrust::device_vector<T> *data_dots[n_gpu];
   thrust::device_vector<T> *centroid_dots[n_gpu];
-  thrust::host_vector<int> *h_labels = new thrust::host_vector<int>(rows);
+  int *h_labels = alloc_result<int>(rows);
 
 #pragma omp parallel for
   for (int q = 0; q < n_gpu; q++) {
@@ -870,11 +877,10 @@ int kmeans_predict(int verbose, int gpu_idtry, int n_gputry, size_t rows,
         });
 #pragma omp critical
     thrust::copy(d_labels.begin(), d_labels.end(),
-                 h_labels->begin() + q * chunk_size);
+                 h_labels + q * chunk_size);
   }
 
-  // TODO: check memory freeing
-  *pred_labels = h_labels->data();
+  *pred_labels = h_labels;
 
 #pragma omp parallel for
   for (int q = 0; q < n_gpu; q++) {
@@ -941,20 +947,21 @@ int kmeans_transform(int verbose, int gpu_idtry, int n_gputry, size_t rows,
   }
 
   // Move the resulting labels into host memory from all devices
-  thrust::host_vector<T> *h_pairwise_distances = new thrust::host_vector<T>(0);
+  const size_t chunk_distances = rows / n_gpu * k;
+  T *h_pairwise_distances = alloc_result<T>(rows * k);
 #pragma omp parallel for
   for (int q = 0; q < n_gpu; q++) {
-    h_pairwise_distances->insert(h_pairwise_distances->end(),
-                                 d_pairwise_distances[q]->begin(),
-                                 d_pairwise_distances[q]->end());
+    thrust::copy(d_pairwise_distances[q]->begin(),
+                 d_pairwise_distances[q]->end(),
+                 h_pairwise_distances + q * chunk_distances);
   }
-  *preds = h_pairwise_distances->data();
+  *preds = h_pairwise_distances;
 
   // Print centroids
   if (verbose >= H2O4GPU_LOG_VERBOSE) {
     std::cout << std::endl;
     for (int i = 0; i < rows * cols; i++) {
-      std::cout << h_pairwise_distances->data()[i] << " ";
+      std::cout << h_pairwise_distances[i] << " ";
       if (i % cols == 1) {
         std::cout << std::endl;
       }
