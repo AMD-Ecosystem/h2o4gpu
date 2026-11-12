@@ -122,7 +122,26 @@ fullinstall-xgboost: xgboost install_xgboost
 
 fullinstall-xgboost-prev: xgboost_prev install_xgboost_prev
 
+.PHONY: lightgbm_rocm
+lightgbm_rocm:
+	@echo "----- Building LightGBM (ROCm) -----"
+	cd LightGBM_rocm && \
+	(git apply --reverse --check ../patches/LightGBM_rocm/*.patch 2>/dev/null || git apply ../patches/LightGBM_rocm/*.patch) && \
+	rm -rf dist && PATH=$(dir $(shell which $(PYTHON))):$$PATH sh build-python.sh bdist_wheel --rocm && \
+	rm -rf python-package/dist_gpu && mv dist python-package/dist_gpu
+
+.PHONY: lightgbm_rocm_cpu
+lightgbm_rocm_cpu:
+	@echo "----- Building LightGBM (ROCm build, CPU) -----"
+	cd LightGBM_rocm && \
+	(git apply --reverse --check ../patches/LightGBM_rocm/*.patch 2>/dev/null || git apply ../patches/LightGBM_rocm/*.patch) && \
+	rm -rf dist && PATH=$(dir $(shell which $(PYTHON))):$$PATH sh build-python.sh bdist_wheel && \
+	rm -rf python-package/dist_cpu && mv dist python-package/dist_cpu
+
 .PHONY: lightgbm_gpu
+ifeq ($(USE_HIP),ON)
+lightgbm_gpu: lightgbm_rocm
+else
 lightgbm_gpu:
 	@echo "----- Building LightGBM (GPU) target $(LIGHTGBM_TARGET) -----"
 	@echo "See https://github.com/Microsoft/LightGBM/wiki/Installation-Guide#with-gpu-support for details"
@@ -165,8 +184,12 @@ lightgbm_gpu:
 	cd python-package && rm -rf dist && $(PYTHON) setup.py sdist bdist_wheel && cd .. && \
 	cd python-package && rm -rf dist_gpu && mv dist dist_gpu; \
 	fi
+endif
 
 .PHONY: lightgbm_cpu
+ifeq ($(USE_HIP),ON)
+lightgbm_cpu: lightgbm_rocm_cpu
+else
 lightgbm_cpu:
 	@echo "----- Building LightGBM (CPU) target $(LIGHTGBM_TARGET) -----"
 	@echo "See https://github.com/Microsoft/LightGBM/wiki/Installation-Guide#with-gpu-support for details"
@@ -198,6 +221,7 @@ lightgbm_cpu:
 	cd python-package && cd compile && (true || ln -fs ../../compute .) && cd ../../ && \
 	cd python-package && rm -rf dist && $(PYTHON) setup.py sdist bdist_wheel && cd .. && \
 	cd python-package && rm -rf dist_cpu && mv dist dist_cpu ;
+endif
 
 fullinstall-lightgbm:
 	$(XGB_PROLOGUE) 'make lightgbm_gpu'
@@ -236,10 +260,10 @@ install_xgboost:
 
 install_lightgbm_gpu:
 	@echo "----- pip install lightgbm_gpu built locally -----"
-	cd LightGBM/python-package/dist_gpu && $(PYTHON) -m pip install lightgbm*-py3-none-any.whl --upgrade --no-deps --target .
+	cd $(LIGHTGBM_DIR)/python-package/dist_gpu && $(PYTHON) -m pip install lightgbm*-py3-none-*.whl --upgrade --no-deps --target .
 install_lightgbm_cpu:
 	@echo "----- pip install lightgbm (for CPU) built locally -----"
-	cd LightGBM/python-package/dist_cpu && $(PYTHON) -m pip install lightgbm*-py3-none-any.whl --upgrade --no-deps --target .
+	cd $(LIGHTGBM_DIR)/python-package/dist_cpu && $(PYTHON) -m pip install lightgbm*-py3-none-*.whl --upgrade --no-deps --target .
 
 install_py:
 	$(MAKE) -j install -C src/interface_py
