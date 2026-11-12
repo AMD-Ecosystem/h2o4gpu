@@ -39,6 +39,29 @@ if(OpenMP_CXX_FOUND OR OPENMP_FOUND)
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+if(WIN32)
+        # vcpkg installs OpenBLAS's cblas.h under include/openblas.
+        FIND_PATH(CBLAS_INCLUDE_DIR cblas.h PATH_SUFFIXES openblas)
+        # The CPU solver headers still use std::unary_function, which the
+        # MSVC standard library hides in C++17 mode unless asked for it.
+        ADD_DEFINITIONS(-D_HAS_AUTO_PTR_ETC=1)
+        ADD_DEFINITIONS(-DNOMINMAX -DWIN32_LEAN_AND_MEAN -Dpopen=_popen -Dpclose=_pclose)
+        if(OpenMP_CXX_FOUND)
+                # clang links the LLVM OpenMP runtime; use the matching
+                # omp.h, not MSVC's OpenMP 2.0 one.
+                ADD_DEFINITIONS(-D_OPENMP_LLVM_RUNTIME)
+                # The OpenMP link flag does not reach the linker on Windows.
+                LINK_LIBRARIES(${OpenMP_CXX_LIBRARIES})
+        endif()
+        # Empty <unistd.h>: the sources include it but use nothing from it.
+        INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/hip_compat/win32)
+        # Python.h auto-links pythonXY.lib into the SWIG modules.
+        LINK_DIRECTORIES(${Python_LIBRARY_DIRS})
+        # CMake 4 (needed for clang-cl as the HIP compiler) refuses the
+        # bundled googletest's cmake_minimum_required.
+        SET(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+endif()
+
 # OpenBLAS ships cblas.h under an openblas/ subdir on RHEL/Rocky 8 rather than
 # directly on the default include path, but the sources do #include <cblas.h>.
 FIND_PATH(CBLAS_INCLUDE_DIR cblas.h PATHS /usr/include/openblas /usr/include)
@@ -318,7 +341,18 @@ if(USE_HIP)
         SET_SOURCE_FILES_PROPERTIES(${GPU_CU_SOURCES} PROPERTIES LANGUAGE HIP)
 
         # nvcc includes cuda_runtime.h implicitly in every .cu file.
-        SET(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -include ${HIP_COMPAT_DIR}/cuda_runtime.h -w")
+        if(CMAKE_HIP_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+                SET(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} /FI${HIP_COMPAT_DIR}/cuda_runtime.h -w")
+                # /Ob1 limits inlining to functions marked inline. At the
+                # default level the GLM reduction compiles into a large device
+                # function whose long branches clobber the return address
+                # (llvm/llvm-project#224205); the double-precision fit was
+                # observed to hang on gfx1151. Limiting inlining removes those
+                # long branches.
+                SET_SOURCE_FILES_PROPERTIES(src/gpu/h2o4gpuglm.cu PROPERTIES COMPILE_OPTIONS "/Ob1")
+        else()
+                SET(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -include ${HIP_COMPAT_DIR}/cuda_runtime.h -w")
+        endif()
 
         TARGET_LINK_LIBRARIES(commonh2o4gpu PUBLIC hip::host)
 
