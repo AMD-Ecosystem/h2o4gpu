@@ -9,6 +9,11 @@ USENVTX=0
 USE_HIP ?= OFF
 ifeq ($(USE_HIP),ON)
 CMAKE_GPU_FLAGS = -DUSE_CUDA=OFF -DUSE_HIP=ON
+# h2oai's LightGBM fork predates ROCm support; build upstream LightGBM with the
+# same h2o changes (patches/LightGBM_rocm) instead.
+LIGHTGBM_DIR = LightGBM_rocm
+else
+LIGHTGBM_DIR = LightGBM
 endif
 
 # By default 0 means Release, set to "Debug" if you want to compile sources with debug flags
